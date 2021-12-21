@@ -34,3 +34,8 @@ By default:
 
 - IP is `10.3.141.1`, with root credentials being (`admin`,`secret`)
 - SSID is `XXX`, with password being `ChangeMe`
+
+
+## Next Steps
+
+- Try with `Node-RED` ?
