@@ -20,10 +20,17 @@
 
 Configuration is done via a `mosquitto.conf` file.
 The minimal configuration should tell Mosquitto to use the IP provided by RaspAP, which is `10.3.141.1` by default. Default port for MQTT is `1883`.
-So add this lise to the `mosquitto.conf` file:
+So add this line to the `mosquitto.conf` file:
 
 ```
 listener 1883 10.3.141.1
 ```
 
 Then launch the service via `mosquitto -c ./mosquitto.conf`
+
+## RaspAP settings
+
+By default:
+
+- IP is `10.3.141.1`, with root credentials being (`admin`,`secret`)
+- SSID is `XXX`, with password being `ChangeMe`
