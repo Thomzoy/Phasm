@@ -12,7 +12,13 @@
 
 - Install `mosquitto` (MQTT Broker)
 
-- Install `streamlit` **version 0.62**
+- Install the required packages via 
+```
+cd dash
+pip install -r requirements.txt
+```
+
+- **DEPRECIATED** Install `streamlit` **version 0.62**
    - ⚠️ version 0.63 and above depends on `pyarrow` which currently doesn't work well on the Pi3 (at least on the 32 bits version)
 
 
