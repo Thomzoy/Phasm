@@ -14,7 +14,7 @@ async def color_flash(**kwargs):
 
     pattern = [1023, 0, 1023, 0, 1023, 0]
 
-    color = kwargs.get("color", None)
+    color = kwargs.get("flash_color", None)
 
     if color is None:
         for color in ["R", "G", "B"]:
@@ -58,23 +58,23 @@ def ramp_down(color_to=(0, 0, 1023), duration=1, n_steps=100):
 
 async def storm(**kwargs):
     """
-    To simulate a storm each "period" seconds
+    To simulate a storm each "flash_period" seconds
     """
 
-    period = kwargs.get("period", 60)
-    base_color = kwargs.get("base_color", (0, 0, 1023))
+    storm_period = kwargs.get("storm_period", 60)
+    storm_color = kwargs.get("storm_color", (0, 0, 1023))
 
-    h.set_rgb(*base_color)
-
-    await asyncio.sleep(5)
-    ramp_up(duration=0.25, n_steps=10)
-    ramp_down(duration=1, n_steps=40)
+    h.set_rgb(*storm_color)
 
     await asyncio.sleep(5)
-    ramp_up(duration=0.15, n_steps=10)
-    h.set_rgb(*base_color)
-    ramp_up(duration=0.25, n_steps=10)
-    ramp_down(duration=0.5, n_steps=20)
+    ramp_up(color_from=storm_color, duration=0.25, n_steps=10)
+    ramp_down(color_to=storm_color, duration=1, n_steps=40)
+
+    await asyncio.sleep(5)
+    ramp_up(color_from=storm_color, duration=0.15, n_steps=10)
+    h.set_rgb(*storm_color)
+    ramp_up(color_from=storm_color, duration=0.25, n_steps=10)
+    ramp_down(color_to=storm_color, duration=0.5, n_steps=20)
 
 
 async def program(program_name, **kwargs):

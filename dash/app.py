@@ -1,24 +1,22 @@
 # Run this app with `python app.py` and
 # visit http://10.3.141.1:8000/ in your web browser.
 
-import dash
-from dash.dependencies import Input, Output, State, MATCH, ALL
-from dash import html
-import dash_daq as daq
-import dash_bootstrap_components as dbc
-
-import mqtt
-
 import json
 
-from programs import all_programs
+from copy import deepcopy
+
+import dash
+import dash_daq as daq
+from dash.dependencies import Input, Output, State, MATCH, ALL
+from dash import html
+import dash_bootstrap_components as dbc
+
+from programs import all_programs, payload
+
+from mqtt import get_client
 
 device = dict(selected=False, color="dark")
-
 devices = {i: device.copy() for i in [1, 2, 3, 4]}
-
-client = mqtt.client
-#client.loop_forever()
 
 app = dash.Dash(
     __name__,
@@ -28,7 +26,6 @@ app = dash.Dash(
             "content": "width=device-width, initial-scale=1.0, maximum-scale=1.2, minimum-scale=0.5,",
         }
     ],
-    # external_stylesheets=[dbc.themes.DARKLY],
 )
 
 ##### NAVBAR #####
@@ -144,7 +141,7 @@ tabs = tabs = html.Div(
             [
                 dbc.Tab(tab1_content, label="Program", tab_id="tab-1"),
                 dbc.Tab(label="Parameters", tab_id="tab-2"),
-                dbc.Tab(tab3_content, label="Send", tab_id="tab-3")
+                dbc.Tab(tab3_content, label="Send", tab_id="tab-3"),
             ],
             id="tabs",
             active_tab="tab-1",
@@ -153,40 +150,54 @@ tabs = tabs = html.Div(
     ]
 )
 
-@app.callback(Output("content", "children"), [State("program-select", "value"), Input("tabs", "active_tab")])
-def switch_tab(program, at):
-    if at in["tab-1","tab-3"]:
+
+@app.callback(Output("program-send", "color"), Input("program-send", "n_clicks"))
+def send_program(n_clicks):
+
+    print(f"Sending {payload}")
+    p = deepcopy(payload)
+
+    if n_clicks is None:
+        return "primary"
+
+    if n_clicks > 0:
+        for id, kwarg in p["program_kwargs"].items():
+            if "color" in id:
+                # From HEX to RGB
+                kwarg = tuple(int(kwarg.lstrip("#")[i : i + 2], 16) for i in (0, 2, 4))
+                p["program_kwargs"][id] = kwarg
+
+        client = get_client()
+        client.publish("tpj_test_topic", payload=json.dumps(p), qos=1, retain=False)
+        print("Sent ")
+        return "success"
+
+
+@app.callback(
+    Output("content", "children"),
+    State("program-select", "value"),
+    State({"role": "program_kwarg", "id": ALL}, "value"),
+    State({"role": "program_kwarg", "id": ALL}, "id"),
+    Input("tabs", "active_tab"),
+)
+def switch_tab(program, kwargs, ids, at):
+
+    # Saving params
+    global payload
+
+    payload["program"] = program
+    for kwarg, id_dict in zip(kwargs, ids):
+        id = id_dict["id"]
+        payload["program_kwargs"][id] = kwarg
+    print(f"Payload: {payload}")
+    
+    if at in ["tab-1", "tab-3"]:
         return None
     elif at == "tab-2":
-        if program in all_programs:
-            return all_programs[program]
-        else:
-            return all_programs['default']
+        return all_programs(program, payload)
 
-app.layout = html.Div(
-    [
-        navbar,
-        tabs
-    ]
-)
 
-def update_output(n_clicks, color):
-
-    rgb_color = [(c + 1) * 4 - 1 for c in color["rgb"].values()][
-        :-1
-    ]  # Remove the alpha parameter
-
-    payload = dict(
-        program="color_flash",
-        program_kwargs={"color": rgb_color},
-    )
-
-    payload = json.dumps(payload)
-
-    client.publish("tpj_test_topic", payload=payload, qos=1, retain=False)
-
-    return "Clicks: {}. The selected color is {}.".format(n_clicks, color)
-
+app.layout = html.Div([navbar, tabs])
 
 if __name__ == "__main__":
     app.run_server(port=8000, host="10.3.141.1", debug=True)
