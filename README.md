@@ -24,23 +24,36 @@ pip install -r requirements.txt
 
 ## Mosquitto settings
 
-Configuration is done via a `mosquitto.conf` file.
+Configuration is done via the `/etc/mosquitto/mosquitto.conf` file.
 The minimal configuration should tell Mosquitto to use the IP provided by RaspAP, which is `10.3.141.1` by default. Default port for MQTT is `1883`.
-So add this line to the `mosquitto.conf` file:
+For the moment we want everybody to be able to interact with the brocker
+So add these lines to the `mosquitto.conf` file:
 
 ```
 listener 1883 10.3.141.1
+
+allow_anonymous true
 ```
 
-Then launch the service via `mosquitto -c ./mosquitto.conf`
+Then mosquitto should be handled as a service:
+- Starting via `systemctl start mosquitto`
+- Checking status via `systemctl status mosquitto`
+- Stopping via `systemctl stop mosquitto`
 
 ## RaspAP settings
 
 By default:
 
 - IP is `10.3.141.1`, with root credentials being (`admin`,`secret`)
-- SSID is `XXX`, with password being `ChangeMe`
+- SSID is `raspi-webgui`, with password being `ChangeMe`
 
+## Dash Settings
+
+The app should run on the host provided by RaspAP, on port 8000:
+
+```
+app.run_server(port=8000, host="10.3.141.1", debug=True)
+```
 
 ## Next Steps
 
