@@ -2,12 +2,13 @@ print("Booting")
 
 from time import sleep
 import network
+import socket
 
 from configuration import COLORS, config
 
 import helpers as h
 
-[pmw.duty(0) for pmw in COLORS.values()]
+h.reset_pins()
 
 print("Testing LEDs")
 
@@ -47,8 +48,6 @@ for trial in range(10):
         break
     else:
         sleep(1)
-
-import socket
 
 print("Testing Internet Connection")
 

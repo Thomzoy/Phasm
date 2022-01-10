@@ -2,7 +2,7 @@ import time
 from mqtt_as import MQTTClient, config
 import uasyncio as asyncio
 
-from configuration import COLORS, PROGRAM
+from configuration import COLORS, PROGRAM, DEVICE
 
 import helpers as h
 import programs as p
@@ -24,7 +24,7 @@ def callback(topic, msg, retained):
 
 
 async def conn_han(client):
-    await client.subscribe("tpj_test_topic", 1)
+    await client.subscribe(f"esps/{DEVICE}", 1)
 
 
 async def main(client):

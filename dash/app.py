@@ -4,6 +4,7 @@
 import json
 
 from copy import deepcopy
+from typing import Any, Dict, List, Union
 
 import dash
 import dash_daq as daq
@@ -69,9 +70,25 @@ ddm = dbc.DropdownMenu(
 
 @app.callback(
     Output({"role": "ddm-badge", "id": ALL}, "color"),
-    [Input({"role": "ddm-button", "id": ALL}, "n_clicks")],
+    Input({"role": "ddm-button", "id": ALL}, "n_clicks"),
 )
-def activate_devices(n_clicks_list):
+def activate_devices(n_clicks_list: List[int]) -> List[str]:
+    """
+    Callback to activate selected devices in the NavBar dropdown
+    Will modify the global variable `devices`
+
+    Parameters
+    ----------
+    n_clicks_list : List[int]
+        List of `n_clicks` values
+        First item corresponds to the "Select All" button
+        Then `n_clicks_list[i]` corresponds to device n°i
+
+    Returns
+    -------
+    List[str]
+        List of colors to change the buttons' styles if a device is selected
+    """
 
     global devices
 
@@ -83,7 +100,7 @@ def activate_devices(n_clicks_list):
     for i in devices:
         devices[i]["selected"] = selects[i]
         devices[i]["color"] = "success" if selects[i] else "dark"
-    print(devices)
+
     return ["success" if selects[0] else "dark"] + [
         d["color"] for d in devices.values()
     ]
@@ -151,13 +168,29 @@ tabs = tabs = html.Div(
 )
 
 
-@app.callback(Output("program-send", "color"), Input("program-send", "n_clicks"))
-def send_program(n_clicks):
+@app.callback(
+    Output("program-send", "color"),
+    Input("program-send", "n_clicks"),
+)
+def send_program(n_clicks: int) -> str:
+    """
+    Publish the selected program + parameters to the MQTT topic
+
+    Parameters
+    ----------
+    n_clicks : int
+        clicks of the "Send" button
+
+    Returns
+    -------
+    str
+        color of the "Send" button
+    """
 
     print(f"Sending {payload}")
     p = deepcopy(payload)
 
-    if n_clicks is None:
+    if n_clicks is None:  # Handling callback call at startup
         return "primary"
 
     if n_clicks > 0:
@@ -168,8 +201,12 @@ def send_program(n_clicks):
                 p["program_kwargs"][id] = kwarg
 
         client = get_client()
-        client.publish("tpj_test_topic", payload=json.dumps(p), qos=1, retain=False)
-        print("Sent ")
+        for device_id, device in devices.items():
+            if device["selected"]:
+                client.publish(
+                    f"esps/{device_id}", payload=json.dumps(p), qos=1, retain=False
+                )
+                print(f"Sent to device n°{device_id}")
         return "success"
 
 
@@ -180,7 +217,34 @@ def send_program(n_clicks):
     State({"role": "program_kwarg", "id": ALL}, "id"),
     Input("tabs", "active_tab"),
 )
-def switch_tab(program, kwargs, ids, at):
+def switch_tab(
+    program: str,
+    kwargs: List[Dict[str, Any]],
+    ids: List[Dict[str, Any]],
+    at: str,
+) -> Union[None, dbc.Card]:
+    """
+    Callback to switch between tabs:
+    - Tab 1 is to pick the program
+    - Tab 2 is to pick the program's parameters
+    - Tab 3 is to send the program
+
+    Parameters
+    ----------
+    program : str
+        name of the program, coming from the `program-select` Dropdown
+    kwargs : List[Dict[str, Any]]
+        kwargs of the program
+    ids : List[Dict[str, Any]]
+        List of elements ids, with 1 to 1 correspondance to the above kwargs
+    at : str
+        tab name
+
+    Returns
+    -------
+    Union[None, dbc.Card]
+        Content of the Tab
+    """
 
     # Saving params
     global payload
@@ -190,8 +254,9 @@ def switch_tab(program, kwargs, ids, at):
         id = id_dict["id"]
         payload["program_kwargs"][id] = kwarg
     print(f"Payload: {payload}")
-    
+
     if at in ["tab-1", "tab-3"]:
+        # Those tabs already contains content
         return None
     elif at == "tab-2":
         return all_programs(program, payload)
