@@ -2,7 +2,8 @@
 # visit http://10.3.141.1:8000/ in your web browser.
 
 import json
-
+import pathlib
+import os
 from copy import deepcopy
 from typing import Any, Dict, List, Union
 
@@ -12,12 +13,18 @@ from dash.dependencies import Input, Output, State, MATCH, ALL
 from dash import html
 import dash_bootstrap_components as dbc
 
+from tinydb import TinyDB, Query
 from programs import all_programs, payload
-
 from mqtt import get_client
 
 device = dict(selected=False, color="dark")
 devices = {i: device.copy() for i in [1, 2, 3, 4]}
+db = TinyDB(
+    os.path.join(
+        pathlib.Path(__file__).parent.resolve(),
+        "db.json",
+    )
+)
 
 app = dash.Dash(
     __name__,
@@ -137,6 +144,35 @@ tab1_content = dbc.Card(
     className="mt-3",
 )
 
+tab2_content = dbc.Card(
+    dbc.CardBody(
+        [
+            dbc.InputGroup(
+                [
+                    dbc.InputGroupText("Load Parameters..."),
+                    dbc.Select(
+                        id="program-kwargs-select",
+                        options=[
+                            {"label": "Color Flash Params #1", "value": "color_cycle"},
+                            {"label": "Color Flash Params #2", "value": "color_flash"},
+                            {"label": "Storm Params #1", "value": "storm"},
+                        ],
+                    ),
+                ]
+            ),
+            dbc.InputGroup(
+                [
+                    dbc.InputGroupText("Save Parameters..."),
+                    dbc.Input(
+                        placeholder="Params name...", id="program-params-savename"
+                    ),
+                    dbc.Button("Save", id="program-params-save", n_clicks=0),
+                ]
+            ),
+        ]
+    )
+)
+
 tab3_content = dbc.Card(
     dbc.CardBody(
         [
@@ -157,7 +193,7 @@ tabs = tabs = html.Div(
         dbc.Tabs(
             [
                 dbc.Tab(tab1_content, label="Program", tab_id="tab-1"),
-                dbc.Tab(label="Parameters", tab_id="tab-2"),
+                dbc.Tab(tab2_content, label="Parameters", tab_id="tab-2"),
                 dbc.Tab(tab3_content, label="Send", tab_id="tab-3"),
             ],
             id="tabs",
@@ -212,15 +248,18 @@ def send_program(n_clicks: int) -> str:
 
 @app.callback(
     Output("content", "children"),
+    Output("program-kwargs-select", "options"),
     State("program-select", "value"),
     State({"role": "program_kwarg", "id": ALL}, "value"),
     State({"role": "program_kwarg", "id": ALL}, "id"),
+    Input("program-kwargs-select", "value"),
     Input("tabs", "active_tab"),
 )
 def switch_tab(
     program: str,
     kwargs: List[Dict[str, Any]],
     ids: List[Dict[str, Any]],
+    program_kwargs_name: str,
     at: str,
 ) -> Union[None, dbc.Card]:
     """
@@ -246,6 +285,18 @@ def switch_tab(
         Content of the Tab
     """
 
+    Q = Query()
+    programs_kwargs = db.table("program_kwargs")
+    program_kwargs_options = programs_kwargs.search(Q.program == program)
+    program_kwargs_picked = (
+        None
+        if program_kwargs_name is None
+        else programs_kwargs.get(Q.name == program_kwargs_name)
+    )
+
+    if program_kwargs_picked is not None:
+        kwargs, ids = program_kwargs_picked["kwargs"], program_kwargs_picked["ids"]
+
     # Saving params
     global payload
 
@@ -257,12 +308,49 @@ def switch_tab(
 
     if at in ["tab-1", "tab-3"]:
         # Those tabs already contains content
-        return None
+        return None, []
     elif at == "tab-2":
-        return all_programs(program, payload)
+        return all_programs(program, payload), [
+            {"label": p["name"], "value": p["name"]} for p in program_kwargs_options
+        ]
+
+
+@app.callback(
+    Output("program-params-save", "color"),
+    Output("program-params-savename", "placeholder"),
+    Output("program-params-savename", "value"),
+    State("program-select", "value"),
+    State({"role": "program_kwarg", "id": ALL}, "value"),
+    State({"role": "program_kwarg", "id": ALL}, "id"),
+    State("program-params-savename", "value"),
+    Input("program-params-save", "n_clicks"),
+)
+def save_params(
+    program: str,
+    kwargs: List[Dict[str, Any]],
+    ids: List[Dict[str, Any]],
+    save_name: str,
+    save: int,
+) -> Union[None, str]:
+
+    if save < 1:
+        return "primary", "Params name...", ""
+
+    Q = Query()
+    programs_kwargs = db.table("program_kwargs")
+
+    if programs_kwargs.contains(Q.name == save_name):
+        return "danger", f"Params with name {save_name} already exists", ""
+
+    programs_kwargs.insert(
+        dict(name=save_name, program=program, ids=ids, kwargs=kwargs)
+    )
+
+    return "success", f"Params saved with name {save_name}", ""
 
 
 app.layout = html.Div([navbar, tabs])
 
 if __name__ == "__main__":
-    app.run_server(port=8000, host="10.3.141.1", debug=True)
+    app.run_server(debug=True)
+    # app.run_server(port=8000, host="10.3.141.1", debug=True)
