@@ -149,24 +149,19 @@ tab2_content = dbc.Card(
         [
             dbc.InputGroup(
                 [
-                    dbc.InputGroupText("Load Parameters..."),
+                    dbc.InputGroupText("Load Params..."),
                     dbc.Select(
                         id="program-kwargs-select",
-                        options=[
-                            {"label": "Color Flash Params #1", "value": "color_cycle"},
-                            {"label": "Color Flash Params #2", "value": "color_flash"},
-                            {"label": "Storm Params #1", "value": "storm"},
-                        ],
+                        options=[],
                     ),
                 ]
             ),
             dbc.InputGroup(
                 [
-                    dbc.InputGroupText("Save Parameters..."),
+                    dbc.Button("Save Params...", id="program-params-save", n_clicks=0),
                     dbc.Input(
                         placeholder="Params name...", id="program-params-savename"
                     ),
-                    dbc.Button("Save", id="program-params-save", n_clicks=0),
                 ]
             ),
         ]
