@@ -40,12 +40,77 @@ Then mosquitto should be handled as a service:
 - Checking status via `systemctl status mosquitto`
 - Stopping via `systemctl stop mosquitto`
 
+The service should be able to start at boot.  
+However, it has to be able to connect to the IP provided by RaspAP, which can take some time to be ready.  
+To tackle this, increase the retry period of the Mosquitto service to e.g. 5 seconds (default is 100ms) to make some time.  
+To do so, modify the file at `/lib/systemd/system/mosquitto.service`:
+
+```
+[Unit]
+Description=Mosquitto MQTT Broker
+Documentation=man:mosquitto.conf(5) man:mosquitto(8)
+
+[Service]
+Type=notify
+NotifyAccess=main
+ExecStart=/usr/sbin/mosquitto -c /etc/mosquitto/mosquitto.conf
+ExecReload=/bin/kill -HUP $MAINPID
+# Restart necessary to handle the time needed by RaspAP to make the adress available
+Restart=on-failure
+RestartSec=5
+ExecStartPre=/bin/mkdir -m 740 -p /var/log/mosquitto
+ExecStartPre=/bin/chown mosquitto /var/log/mosquitto
+ExecStartPre=/bin/mkdir -m 740 -p /run/mosquitto
+ExecStartPre=/bin/chown mosquitto /run/mosquitto
+ExecStartPre=/bin/mkdir -m 740 -p /var/run/mosquitto
+ExecStartPre=/bin/chown mosquitto /var/run/mosquitto
+
+[Install]
+WantedBy=multi-user.target
+```
+
+**Some notes**
+
+- Check the list of services via `systemctl list-units --type=service`
+- Following [this post](https://github.com/eclipse/mosquitto/issues/1950) might be useful
+
 ## RaspAP settings
 
 By default:
 
 - IP is `10.3.141.1`, with root credentials being (`admin`,`secret`)
 - SSID is `raspi-webgui`, with password being `ChangeMe`
+
+The RaspAP service should be set up to launch **before** Mosquitto, since the later needs the IP address provided by RaspAP.  
+
+To do so, change the config file of the RaspAP daemon located at `/lib/systemd/system/raspapd.service`:
+
+```
+### BEGIN INIT INFO
+# Provides:          raspapd
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     S 2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start RaspAP daemon at boot time
+# Description:       Enable service provided by daemon
+### END INIT INFO
+# Author: BillZ <billzimmerman@gmail.com>
+
+[Unit]
+Description=RaspAP Service Daemon
+DefaultDependencies=no
+Before=mosquitto.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /etc/raspap/hostapd/servicestart.sh --interface uap0 --seconds 3
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Then reload the service via `sudo systemctl daemon-reload`
 
 ## Dash Settings
 

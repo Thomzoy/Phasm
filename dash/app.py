@@ -5,7 +5,7 @@ import json
 import pathlib
 import os
 from copy import deepcopy
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Union, Tuple
 
 import dash
 import dash_daq as daq
@@ -261,12 +261,13 @@ def switch_tab(
     ids: List[Dict[str, Any]],
     program_kwargs_name: str,
     at: str,
-) -> Union[None, dbc.Card]:
+) -> Tuple[dbc.Card, List[Dict[str, Any]]]:
     """
     Callback to switch between tabs:
     - Tab 1 is to pick the program
     - Tab 2 is to pick the program's parameters
     - Tab 3 is to send the program
+    This callback is also called when a saved program setting is picked
 
     Parameters
     ----------
@@ -276,8 +277,10 @@ def switch_tab(
         kwargs of the program
     ids : List[Dict[str, Any]]
         List of elements ids, with 1 to 1 correspondance to the above kwargs
+    program_kwargs_name : str
+        Name of the selected program kwargs in Tab 2
     at : str
-        tab name
+        Tab name
 
     Returns
     -------
@@ -352,5 +355,5 @@ def save_params(
 app.layout = html.Div([navbar, tabs])
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
-    # app.run_server(port=8000, host="10.3.141.1", debug=True)
+    # app.run_server(debug=True)
+    app.run_server(port=8000, host="10.3.141.1", debug=True)
