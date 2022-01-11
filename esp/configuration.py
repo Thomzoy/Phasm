@@ -24,9 +24,9 @@ PROGRAM = dict(
     program_kwargs={},
 )
 
-DEVICES = dict(
-    UNIQUE_ID_1=1,
-    UNIQUE_ID_2=2,
-)
+DEVICES = {
+    "c8c9a3cbfe88": 1,
+    "UNIQUE_ID_2": 2,
+}
 
 DEVICE = DEVICES[ubinascii.hexlify(unique_id()).decode("utf-8")]
