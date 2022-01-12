@@ -15,6 +15,10 @@ import dash_bootstrap_components as dbc
 
 from tinydb import TinyDB, Query
 from programs import all_programs, payload
+
+import tabs_content
+import system_infos
+
 from mqtt import get_client
 
 device = dict(selected=False, color="dark")
@@ -37,6 +41,25 @@ app = dash.Dash(
 )
 
 ##### NAVBAR #####
+temperature_badge = dbc.Badge(
+    "",
+    pill=True,
+    color="primary",
+    id="temperature_badge",
+    class_name="button",
+)
+
+
+@app.callback(
+    Output("temperature_badge", "children"),
+    Output("temperature_badge", "color"),
+    Input("temperature_badge", "n_clicks"),
+)
+def display_cpu_temp(n_clicks: int) -> str:
+    print(system_infos.get_wlan_infos())
+    T, color = system_infos.get_cpu_temp()
+    return f"CPU : {T}°", color
+
 
 ddm = dbc.DropdownMenu(
     [
@@ -115,7 +138,10 @@ def activate_devices(n_clicks_list: List[int]) -> List[str]:
 
 navbar = dbc.NavbarSimple(
     children=[
-        dbc.NavItem(dbc.NavLink("Page 1", href="#")),
+        dbc.NavItem(
+            temperature_badge,
+            class_name="d-inline-flex align-items-center justify-content-start",
+        ),
         ddm,
     ],
     brand="Phasm - Sceno",
@@ -126,70 +152,14 @@ navbar = dbc.NavbarSimple(
 
 ##### TABS #####
 
-tab1_content = dbc.Card(
-    dbc.CardBody(
-        [
-            html.P("Select Program", className="card-text"),
-            dbc.Select(
-                id="program-select",
-                options=[
-                    {"label": "Color Cycle", "value": "color_cycle"},
-                    {"label": "Color Flash", "value": "color_flash"},
-                    {"label": "Storm", "value": "storm"},
-                ],
-            ),
-            html.P("", className="card-text"),
-        ]
-    ),
-    className="mt-3",
-)
-
-tab2_content = dbc.Card(
-    dbc.CardBody(
-        [
-            dbc.InputGroup(
-                [
-                    dbc.InputGroupText("Load Params..."),
-                    dbc.Select(
-                        id="program-kwargs-select",
-                        options=[],
-                    ),
-                ]
-            ),
-            dbc.InputGroup(
-                [
-                    dbc.Button("Save Params...", id="program-params-save", n_clicks=0),
-                    dbc.Input(
-                        placeholder="Params name...", id="program-params-savename"
-                    ),
-                ]
-            ),
-        ]
-    )
-)
-
-tab3_content = dbc.Card(
-    dbc.CardBody(
-        [
-            html.P("Send to ESPs", className="card-text"),
-            dbc.Button(
-                "Go !",
-                id="program-send",
-                color="primary",
-            ),
-            html.P("", className="card-text"),
-        ]
-    ),
-    className="mt-3",
-)
-
 tabs = tabs = html.Div(
     [
         dbc.Tabs(
             [
-                dbc.Tab(tab1_content, label="Program", tab_id="tab-1"),
-                dbc.Tab(tab2_content, label="Parameters", tab_id="tab-2"),
-                dbc.Tab(tab3_content, label="Send", tab_id="tab-3"),
+                dbc.Tab(tabs_content.tab1_content, label="Program", tab_id="tab-1"),
+                dbc.Tab(tabs_content.tab2_content, label="Parameters", tab_id="tab-2"),
+                dbc.Tab(tabs_content.tab3_content, label="Send", tab_id="tab-3"),
+                dbc.Tab(label="System", tab_id="tab-4"),
             ],
             id="tabs",
             active_tab="tab-1",
@@ -311,6 +281,9 @@ def switch_tab(
         return all_programs(program, payload), [
             {"label": p["name"], "value": p["name"]} for p in program_kwargs_options
         ]
+    elif at == "tab-4":
+        wlan_infos = system_infos.get_wlan_infos()
+        return tabs_content.get_tab4_content(wlan_infos), []
 
 
 @app.callback(

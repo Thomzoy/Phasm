@@ -8,8 +8,8 @@ import ubinascii
 config["server"] = "10.3.141.1"
 config["port"] = 1883
 
-config["ssid"] = "raspi-webgui"
-config["wifi_pw"] = "ChangeMe"
+config["ssid"] = "Phasm"
+config["wifi_pw"] = "HarryThePhasm"
 
 PORTS = dict(
     R=13,

@@ -3,3 +3,5 @@ dash
 dash_daq
 dash_bootstrap_components
 paho-mqtt
+rpi.gpio --install-option='--pre'
+gpiozero
