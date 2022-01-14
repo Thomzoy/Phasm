@@ -6,15 +6,16 @@ import pathlib
 import os
 from copy import deepcopy
 from typing import Any, Dict, List, Union, Tuple
+from time import time
 
 import dash
 import dash_daq as daq
 from dash.dependencies import Input, Output, State, MATCH, ALL
-from dash import html
+from dash import html, dcc
 import dash_bootstrap_components as dbc
 
 from tinydb import TinyDB, Query
-from programs import all_programs, payload
+from programs import all_programs, get_clear_payload, fade_callback
 
 import tabs_content
 import system_infos
@@ -27,8 +28,12 @@ db = TinyDB(
     os.path.join(
         pathlib.Path(__file__).parent.resolve(),
         "db.json",
-    )
+    ),
+    indent=4,
+    separators=(",", ": "),
 )
+
+payload = get_clear_payload()
 
 app = dash.Dash(
     __name__,
@@ -56,7 +61,6 @@ temperature_badge = dbc.Badge(
     Input("temperature_badge", "n_clicks"),
 )
 def display_cpu_temp(n_clicks: int) -> str:
-    print(system_infos.get_wlan_infos())
     T, color = system_infos.get_cpu_temp()
     return f"CPU : {T}°", color
 
@@ -101,6 +105,7 @@ ddm = dbc.DropdownMenu(
 @app.callback(
     Output({"role": "ddm-badge", "id": ALL}, "color"),
     Input({"role": "ddm-button", "id": ALL}, "n_clicks"),
+    prevent_initial_call=True,
 )
 def activate_devices(n_clicks_list: List[int]) -> List[str]:
     """
@@ -168,10 +173,12 @@ tabs = tabs = html.Div(
     ]
 )
 
+#### CALLBACKS ####
 
 @app.callback(
     Output("program-send", "color"),
     Input("program-send", "n_clicks"),
+    prevent_initial_call=True,
 )
 def send_program(n_clicks: int) -> str:
     """
@@ -191,9 +198,6 @@ def send_program(n_clicks: int) -> str:
     print(f"Sending {payload}")
     p = deepcopy(payload)
 
-    if n_clicks is None:  # Handling callback call at startup
-        return "primary"
-
     if n_clicks > 0:
         for id, kwarg in p["program_kwargs"].items():
             if "color" in id:
@@ -212,20 +216,45 @@ def send_program(n_clicks: int) -> str:
 
 
 @app.callback(
+    Output("fake-placeholder", "children"),
+    Input({"role": "program", "id": "program_name"}, "value"),
+    Input({"role": "program_kwarg", "id": ALL}, "value"),
+    Input({"role": "program_kwarg", "id": ALL}, "id"),
+    prevent_initial_call=True,
+)
+def save_single_param(p: str, vals: List[Any], ids: List[Any]):
+    """
+    Save a parameter when its value is changed
+    """
+    global payload
+
+    trig = dash.callback_context.triggered[0]
+    if trig["value"] is None:
+        return ""
+
+    v = trig["value"]
+    keys = json.loads(trig["prop_id"][:-6])
+
+    if keys["role"] == "program":
+        payload = get_clear_payload()
+        payload["program"] = v
+        return ""
+
+    if keys["role"] == "program_kwarg":
+        payload["program_kwargs"][keys["id"]] = v
+        return ""
+
+
+@app.callback(
     Output("content", "children"),
     Output("program-kwargs-select", "options"),
-    State("program-select", "value"),
-    State({"role": "program_kwarg", "id": ALL}, "value"),
-    State({"role": "program_kwarg", "id": ALL}, "id"),
     Input("program-kwargs-select", "value"),
     Input("tabs", "active_tab"),
 )
 def switch_tab(
-    program: str,
-    kwargs: List[Dict[str, Any]],
-    ids: List[Dict[str, Any]],
     program_kwargs_name: str,
     at: str,
+    prevent_initial_callback=True,
 ) -> Tuple[dbc.Card, List[Dict[str, Any]]]:
     """
     Callback to switch between tabs:
@@ -236,12 +265,6 @@ def switch_tab(
 
     Parameters
     ----------
-    program : str
-        name of the program, coming from the `program-select` Dropdown
-    kwargs : List[Dict[str, Any]]
-        kwargs of the program
-    ids : List[Dict[str, Any]]
-        List of elements ids, with 1 to 1 correspondance to the above kwargs
     program_kwargs_name : str
         Name of the selected program kwargs in Tab 2
     at : str
@@ -253,26 +276,24 @@ def switch_tab(
         Content of the Tab
     """
 
+    global payload
+
+    trigger_id = dash.callback_context.triggered[0]["prop_id"]
+    program = payload["program"]
+
     Q = Query()
     programs_kwargs = db.table("program_kwargs")
     program_kwargs_options = programs_kwargs.search(Q.program == program)
+
     program_kwargs_picked = (
-        None
-        if program_kwargs_name is None
+        dict()
+        if (
+            (program_kwargs_name is None) or ("program-kwargs-select" not in trigger_id)
+        )
         else programs_kwargs.get(Q.name == program_kwargs_name)
     )
-
-    if program_kwargs_picked is not None:
-        kwargs, ids = program_kwargs_picked["kwargs"], program_kwargs_picked["ids"]
-
-    # Saving params
-    global payload
-
-    payload["program"] = program
-    for kwarg, id_dict in zip(kwargs, ids):
-        id = id_dict["id"]
-        payload["program_kwargs"][id] = kwarg
-    print(f"Payload: {payload}")
+    for k, v in program_kwargs_picked.get("program_kwargs", dict()).items():
+        payload["program_kwargs"][k] = v
 
     if at in ["tab-1", "tab-3"]:
         # Those tabs already contains content
@@ -290,19 +311,16 @@ def switch_tab(
     Output("program-params-save", "color"),
     Output("program-params-savename", "placeholder"),
     Output("program-params-savename", "value"),
-    State("program-select", "value"),
-    State({"role": "program_kwarg", "id": ALL}, "value"),
-    State({"role": "program_kwarg", "id": ALL}, "id"),
     State("program-params-savename", "value"),
     Input("program-params-save", "n_clicks"),
+    prevent_initial_call=True,
 )
 def save_params(
-    program: str,
-    kwargs: List[Dict[str, Any]],
-    ids: List[Dict[str, Any]],
     save_name: str,
     save: int,
 ) -> Union[None, str]:
+
+    global payload
 
     if save < 1:
         return "primary", "Params name...", ""
@@ -313,14 +331,25 @@ def save_params(
     if programs_kwargs.contains(Q.name == save_name):
         return "danger", f"Params with name {save_name} already exists", ""
 
+    if not save_name:
+        return "danger", f"Please type a name", ""
+
     programs_kwargs.insert(
-        dict(name=save_name, program=program, ids=ids, kwargs=kwargs)
+        dict(
+            name=save_name,
+            program=payload["program"],
+            program_kwargs=payload["program_kwargs"],
+        )
     )
 
     return "success", f"Params saved with name {save_name}", ""
 
 
-app.layout = html.Div([navbar, tabs])
+placeholder = html.P("", id="fake-placeholder")
+
+# fade_callback(app)
+
+app.layout = html.Div([navbar, tabs, placeholder])
 
 if __name__ == "__main__":
     # app.run_server(debug=True)

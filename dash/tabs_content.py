@@ -9,11 +9,12 @@ tab1_content = dbc.Card(
         [
             html.P("Select Program", className="card-text"),
             dbc.Select(
-                id="program-select",
+                id=dict(role="program", id="program_name"),
                 options=[
                     {"label": "Color Cycle", "value": "color_cycle"},
                     {"label": "Color Flash", "value": "color_flash"},
                     {"label": "Storm", "value": "storm"},
+                    {"label": "Color Fade", "value": "color_fade"},
                 ],
             ),
             html.P("", className="card-text"),

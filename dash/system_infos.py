@@ -5,15 +5,20 @@ import re
 
 
 def get_signal_strength(signal: int):
+    """
+    Classify the WiFI signal strengh
+    """
     if signal >= -60:
         return "success"
     if signal >= -75:
         return "warning"
-    if signal >= -85:
-        return "danger"
+    return "danger"
 
 
 def get_wlan_infos():
+    """
+    Returns a list of device connected to the Pi
+    """
     connected = (
         subprocess.run(
             ["iw", "dev", "wlan1", "station", "dump"],
