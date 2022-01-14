@@ -15,7 +15,7 @@ from dash import html, dcc
 import dash_bootstrap_components as dbc
 
 from tinydb import TinyDB, Query
-from programs import all_programs, get_clear_payload, fade_callback
+from programs import all_programs, get_clear_payload
 
 import tabs_content
 import system_infos
