@@ -15,6 +15,7 @@ tab1_content = dbc.Card(
                     {"label": "Color Flash", "value": "color_flash"},
                     {"label": "Storm", "value": "storm"},
                     {"label": "Color Fade", "value": "color_fade"},
+                    {"label": "Change Program", "value": "overwrite"}
                 ],
             ),
             html.P("", className="card-text"),

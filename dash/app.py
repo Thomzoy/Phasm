@@ -23,7 +23,7 @@ import system_infos
 from mqtt import get_client
 
 device = dict(selected=False, color="dark")
-devices = {i: device.copy() for i in [1, 2, 3, 4]}
+devices = {i: device.copy() for i in [1, 2, 3, 4, 5]}
 db = TinyDB(
     os.path.join(
         pathlib.Path(__file__).parent.resolve(),
@@ -208,8 +208,11 @@ def send_program(n_clicks: int) -> str:
         client = get_client()
         for device_id, device in devices.items():
             if device["selected"]:
+                target=""
+                if payload["program"] == "overwrite":
+                    target = "/overwrite"
                 client.publish(
-                    f"esps/{device_id}", payload=json.dumps(p), qos=1, retain=False
+                    f"esps/{device_id}{target}", payload=json.dumps(p), qos=1, retain=False
                 )
                 print(f"Sent to device n°{device_id}")
         return "success"
@@ -352,5 +355,5 @@ placeholder = html.P("", id="fake-placeholder")
 app.layout = html.Div([navbar, tabs, placeholder])
 
 if __name__ == "__main__":
-    # app.run_server(debug=True)
+    #app.run_server(debug=True)
     app.run_server(port=8000, host="10.3.141.1", debug=True)
