@@ -1,6 +1,10 @@
 # Run this app with `python app.py` and
 # visit http://10.3.141.1:8000/ in your web browser.
 
+# This runs a persistent app that also hosts the Flask server that is then accessed through mqtt
+# With this refactoring, the app is just seen as a way to send up-level parameters to the main process,
+#   that in turn pushes them to the esps.
+
 import json
 import pathlib
 import os
@@ -20,7 +24,7 @@ from programs import all_programs, get_clear_payload
 import tabs_content
 import system_infos
 
-from mqtt import get_client
+from dash_mqtt import get_client
 
 device = dict(selected=False, color="dark")
 devices = {i: device.copy() for i in [1, 2, 3, 4]}
@@ -173,6 +177,7 @@ tabs = tabs = html.Div(
     ]
 )
 
+
 #### CALLBACKS ####
 
 @app.callback(
@@ -194,24 +199,25 @@ def send_program(n_clicks: int) -> str:
     str
         color of the "Send" button
     """
-
-    print(f"Sending {payload}")
+    global HOST, PORT
     p = deepcopy(payload)
 
     if n_clicks > 0:
         for id, kwarg in p["program_kwargs"].items():
             if "color" in id:
                 # From HEX to RGB
-                kwarg = tuple(int(kwarg.lstrip("#")[i : i + 2], 16) for i in (0, 2, 4))
+                kwarg = tuple(int(kwarg.lstrip("#")[i: i + 2], 16) for i in (0, 2, 4))
                 p["program_kwargs"][id] = kwarg
 
-        client = get_client()
+        client = get_client(host_address=HOST, port=PORT)
+        # client.subscribe("esps/1", 1)
+
+        payload_json = json.dumps(p)
         for device_id, device in devices.items():
             if device["selected"]:
-                client.publish(
-                    f"esps/{device_id}", payload=json.dumps(p), qos=1, retain=False
-                )
-                print(f"Sent to device n°{device_id}")
+                # client.publish(topic=f"esps/{device_id}", payload=payload_json, qos=1, retain=True)
+                client.publish(f"esps/{device_id}", payload=payload_json, qos=1, retain=False)
+                print(f"Sending {payload} to esps/{device_id}")
         return "success"
 
 
@@ -252,9 +258,9 @@ def save_single_param(p: str, vals: List[Any], ids: List[Any]):
     Input("tabs", "active_tab"),
 )
 def switch_tab(
-    program_kwargs_name: str,
-    at: str,
-    prevent_initial_callback=True,
+        program_kwargs_name: str,
+        at: str,
+        prevent_initial_callback=True,
 ) -> Tuple[dbc.Card, List[Dict[str, Any]]]:
     """
     Callback to switch between tabs:
@@ -288,7 +294,7 @@ def switch_tab(
     program_kwargs_picked = (
         dict()
         if (
-            (program_kwargs_name is None) or ("program-kwargs-select" not in trigger_id)
+                (program_kwargs_name is None) or ("program-kwargs-select" not in trigger_id)
         )
         else programs_kwargs.get(Q.name == program_kwargs_name)
     )
@@ -316,10 +322,9 @@ def switch_tab(
     prevent_initial_call=True,
 )
 def save_params(
-    save_name: str,
-    save: int,
+        save_name: str,
+        save: int,
 ) -> Union[None, str]:
-
     global payload
 
     if save < 1:
@@ -352,5 +357,12 @@ placeholder = html.P("", id="fake-placeholder")
 app.layout = html.Div([navbar, tabs, placeholder])
 
 if __name__ == "__main__":
-    # app.run_server(debug=True)
-    app.run_server(port=8000, host="10.3.141.1", debug=True)
+    # My PC
+    HOST = "127.0.0.1"
+    PORT = 1883
+
+    # # Pi
+    # HOST = "10.3.141.1"
+    # PORT = 8000
+    # app.run_server(host=HOST, port=PORT)
+    app.run_server(host=HOST, port=PORT, debug=True)
