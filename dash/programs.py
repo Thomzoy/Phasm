@@ -1,10 +1,12 @@
 import dash
 from dash.dependencies import Input, Output, State, MATCH, ALL
-from dash import html
+from dash import html, dcc
 import dash_daq as daq
 import dash_bootstrap_components as dbc
 
-payload = dict(program=None, program_kwargs=dict())
+
+def get_clear_payload():
+    return dict(program=None, program_kwargs=dict())
 
 
 def all_programs(program, payload):
@@ -42,6 +44,38 @@ def all_programs(program, payload):
             className="mt-3",
         )
 
+    if program == "color_fade":
+        selected_program = dbc.Card(
+            dbc.CardBody(
+                [
+                    html.P("Color Fade!", className="card-text"),
+                    html.Div(
+                        [
+                            dbc.Label("Select a color"),
+                            dbc.Input(
+                                value=payload["program_kwargs"].get(
+                                    "flash_color", "#000000"
+                                ),
+                                type="color",
+                                id=dict(role="program_kwarg", id="flash_color"),
+                                style={"width": 75, "height": 50},
+                            ),
+                            dcc.Slider(
+                                min=0,
+                                max=1024,
+                                step=1,
+                                value=0,
+                                id=dict(role="program_kwarg", id="fade_slider"),
+                                updatemode="drag",
+                                size=100,
+                            ),
+                        ]
+                    ),
+                ]
+            ),
+            className="mt-3",
+        )
+
     if program == "storm":
         selected_program = dbc.Card(
             dbc.CardBody(
@@ -64,9 +98,7 @@ def all_programs(program, payload):
                         [
                             html.P("Duration (s)"),
                             dbc.Input(
-                                value=payload["program_kwargs"].get(
-                                    "storm_duration", 10
-                                ),
+                                value=payload["program_kwargs"].get("storm_period", 10),
                                 type="number",
                                 min=10,
                                 max=60,

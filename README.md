@@ -81,6 +81,8 @@ By default:
 - IP is `10.3.141.1`, with root credentials being (`admin`,`secret`)
 - SSID is `raspi-webgui`, with password being `ChangeMe`
 
+**Current setting**: SSID is `Phasm`, password is `HarryThePhasm`
+
 The RaspAP service should be set up to launch **before** Mosquitto, since the later needs the IP address provided by RaspAP.  
 
 To do so, change the config file of the RaspAP daemon located at `/lib/systemd/system/raspapd.service`:
@@ -111,6 +113,24 @@ WantedBy=multi-user.target
 ```
 
 Then reload the service via `sudo systemctl daemon-reload`
+
+## Using a USB antenna
+
+The one used currently is *Realtek Semiconductor Corp. RTL88x2bu [AC1200 Techkey]*.  
+
+An installation guide for the driver can be found [here](https://github.com/morrownr/88x2bu-20210702)
+
+**For it to work with RaspAP**:
+
+1. Install the driver
+2. Open the RaspAP admin page and change all mentions of `wlan0` (internal WiFi) to `wlan1` (external WiFi)
+3. At this point, it might be buggy: restart the Pi.
+4. The GUI might not be available atthis point. We have to manually change some settings:
+    **a.** Edit `/var/www/html/includes/config.php` by setting `RASPI_WIFI_AP_INTERFACE` to `wlan1`  
+    **b.** In this file, paths to other config files are mentionned, where changing from `wlan0` to `wlan1` is needed, namely:  
+    **c.** `/etc/hostapd/hostapd.conf`  
+    **d.** `/etc/dhcpcd.conf`  
+
 
 ## Dash Settings
 
