@@ -5,6 +5,16 @@ import dash_mqtt
 import json
 
 
+def on_message(client, userdata, message):
+    topic = message.topic
+    msg = message.payload
+    print("message received " ,str(message.payload.decode("utf-8")))
+    print("message topic=",message.topic)
+    print("message qos=",message.qos)
+    payload = json.loads(msg.decode("utf-8"))
+    print("Payload: ", payload)
+    dash_programs.program(client, payload)
+
 def callback(topic, msg, retained):
     global client
     print((topic, msg, retained))
@@ -24,15 +34,12 @@ if __name__ == "__main__":
     PORT = 1883
 
     # # Pi
-    # HOST = "10.3.141.1"
-    # PORT = 8000
+    HOST = "10.3.141.1"
+    MQTT_PORT = 1883
 
-    client = dash_mqtt.get_client(host_address=HOST, port=PORT)
+    client = dash_mqtt.get_client(host_address=HOST, port=MQTT_PORT)
     client.subscribe("dash/main", 1)
-    client.subscribe("esps/1", 1)
-    client.subscribe("esps/2", 1)
-    client.subscribe("esps/3", 1)
-    client.subscribe("esps/4", 1)
     print('done subscribing')
+    client.on_message=on_message
     client.loop_forever()
     # asyncio.run(main())

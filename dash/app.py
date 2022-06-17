@@ -26,8 +26,10 @@ import system_infos
 
 from dash_mqtt import get_client
 
-device = dict(selected=False, color="dark")
-devices = {i: device.copy() for i in [1, 2, 3, 4]}
+device = dict(selected=False, color="dark", type="ESP")
+devices = {i: device.copy() for i in [1, 2, 3, 4, 5, 6]}
+devices[6]["type"] = "MASTER"
+
 db = TinyDB(
     os.path.join(
         pathlib.Path(__file__).parent.resolve(),
@@ -88,7 +90,7 @@ ddm = dbc.DropdownMenu(
     + [
         dbc.DropdownMenuItem(
             dbc.Badge(
-                f"ESP #{i}",
+                f"{params['type']} #{i}",
                 pill=True,
                 color=params["color"],
                 className="me-1",
@@ -199,7 +201,7 @@ def send_program(n_clicks: int) -> str:
     str
         color of the "Send" button
     """
-    global HOST, PORT
+    global HOST, MQTT_PORT
     p = deepcopy(payload)
 
     if n_clicks > 0:
@@ -209,14 +211,13 @@ def send_program(n_clicks: int) -> str:
                 kwarg = tuple(int(kwarg.lstrip("#")[i: i + 2], 16) for i in (0, 2, 4))
                 p["program_kwargs"][id] = kwarg
 
-        client = get_client(host_address=HOST, port=PORT)
-        # client.subscribe("esps/1", 1)
+        client = get_client(host_address=HOST, port=MQTT_PORT)
 
         payload_json = json.dumps(p)
         for device_id, device in devices.items():
             if device["selected"]:
-                # client.publish(topic=f"esps/{device_id}", payload=payload_json, qos=1, retain=True)
-                client.publish(f"esps/{device_id}", payload=payload_json, qos=1, retain=False)
+                # client.publish(f"esps/{device_id}", payload=payload_json, qos=1, retain=False)
+                client.publish(f"dash/main", payload=payload_json, qos=1, retain=False)
                 print(f"Sending {payload} to esps/{device_id}")
         return "success"
 
@@ -358,11 +359,11 @@ app.layout = html.Div([navbar, tabs, placeholder])
 
 if __name__ == "__main__":
     # My PC
-    HOST = "127.0.0.1"
-    PORT = 1883
+    #HOST = "127.0.0.1"
+    #PORT = 1883
 
-    # # Pi
-    # HOST = "10.3.141.1"
-    # PORT = 8000
-    # app.run_server(host=HOST, port=PORT)
-    app.run_server(host=HOST, port=PORT, debug=True)
+     # Pi
+    HOST = "10.3.141.1"
+    DASH_PORT = 8000
+    MQTT_PORT = 1883
+    app.run_server(host=HOST, port=DASH_PORT, debug=True)

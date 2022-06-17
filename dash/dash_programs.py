@@ -1,6 +1,8 @@
+import json
+
 # This is meant to be used by the main in dash.
 
-async def broadcast_name_and_kwargs(client, payload):
+def broadcast_name_and_kwargs(client, payload):
     """
     To simulate a storm each "flash_period" seconds
     """
@@ -10,7 +12,7 @@ async def broadcast_name_and_kwargs(client, payload):
         print(f"Sending {payload} to esps/{device_id}")
 
 
-async def ping_pong(client, payload):
+def ping_pong(client, payload):
     """
     To simulate a storm each "flash_period" seconds
     """
@@ -23,8 +25,8 @@ async def ping_pong(client, payload):
 
 
 
-async def program(client, payload):
+def program(client, payload):
     program_name, program_kwargs = payload["program"], payload["program_kwargs"]
-
+    payload_json = json.dumps(payload)
     if program_name in {"color_cycle", "color_flash", "storm"}:
-        await broadcast_name_and_kwargs(client=client, payload=payload)
+        broadcast_name_and_kwargs(client=client, payload=payload_json)

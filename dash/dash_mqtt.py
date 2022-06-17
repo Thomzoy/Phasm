@@ -20,14 +20,12 @@ def on_publish(client, userdata, msg):
     print(msg.topic + " " + str(msg.payload))
 
 
-def get_client(host_address="127.0.0.1", port=8000):
+def get_client(host_address="10.3.141.1", port=1883):
     client = mqtt.Client()
     client.on_connect = on_connect
     client.on_message = on_message
-    client.on_publish = on_publish
+    #client.on_publish = on_publish
     client.connect(host=host_address, port=port, keepalive=60)
     print("Connected")
-
-    client.publish('test_topic', payload='Hello', qos=1, retain=False)
 
     return client
