@@ -34,4 +34,6 @@ DEVICES = {
 
 DEVICE = DEVICES[ubinascii.hexlify(unique_id()).decode("utf-8")]
 
-CURRENT_TASK = None
+from machine import unique_id
+import ubinascii
+print(ubinascii.hexlify(unique_id()).decode("utf-8"))

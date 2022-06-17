@@ -127,4 +127,25 @@ def all_programs(program, payload):
             className="mt-3",
         )
 
+    if program == "overwrite":
+        selected_program = dbc.Card(
+            dbc.CardBody(
+                [
+                    html.P("Overwrite", className="card-text"),
+                    html.Div(
+                        [
+                            dbc.Label("Paste new programm code here", id="code"),
+                            dbc.Textarea(
+                                value="",
+                                size="lg",
+                                id=dict(role="program_kwarg", id="program_code"),
+                            ),
+                        ]
+                    ),
+                ]
+            ),
+            className="mt-3",
+        )
+
     return selected_program
+

@@ -11,6 +11,7 @@ async def color_cycle():
 
 
 async def color_flash(**kwargs):
+
     pattern = [1023, 0, 1023, 0, 1023, 0]
 
     color = kwargs.get("flash_color", None)
@@ -30,6 +31,7 @@ async def color_flash(**kwargs):
 
 
 def ramp_up(color_from=(0, 0, 1023), duration=1, n_steps=100):
+
     color_from_hsv = h.rgb_to_hsv(*color_from)
     saturation_start = color_from_hsv[1]
 
@@ -42,6 +44,7 @@ def ramp_up(color_from=(0, 0, 1023), duration=1, n_steps=100):
 
 
 def ramp_down(color_to=(0, 0, 1023), duration=1, n_steps=100):
+
     color_to_hsv = h.rgb_to_hsv(*color_to)
     saturation_end = color_to_hsv[1]
 
@@ -51,11 +54,6 @@ def ramp_down(color_to=(0, 0, 1023), duration=1, n_steps=100):
         h.set_rgb(*rgb)
 
         sleep(duration / n_steps)
-
-
-async def fade():
-    ramp_up()
-    ramp_down()
 
 
 async def storm(**kwargs):
@@ -86,5 +84,3 @@ async def program(program_name, **kwargs):
         await color_flash(**kwargs)
     elif program_name == "storm":
         await storm(**kwargs)
-    elif program_name == "fade":
-        await fade(**kwargs)
