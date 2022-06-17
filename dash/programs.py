@@ -4,6 +4,7 @@ from dash import html, dcc
 import dash_daq as daq
 import dash_bootstrap_components as dbc
 
+# This is the html binding for programs, careful, names must match to send the right payload.
 
 def get_clear_payload():
     return dict(program=None, program_kwargs=dict())

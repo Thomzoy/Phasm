@@ -1,7 +1,21 @@
-import RPi.GPIO as GPIO
-from gpiozero import CPUTemperature
 import subprocess
 import re
+
+
+def get_cpu_temp():
+    # import RPi.GPIO as GPIO
+    from gpiozero import CPUTemperature
+    """
+    Get the CPU temperature
+    Returns it, along with a category.
+    """
+    temp = round(CPUTemperature().temperature, 1)
+
+    if temp <= 60:
+        return temp, "success"
+    if temp <= 75:
+        return temp, "warning"
+    return temp, "danger"
 
 
 def get_signal_strength(signal: int):
@@ -47,17 +61,3 @@ def get_wlan_infos():
     connected_infos.sort(key=lambda el: el["Signal"], reverse=True)
 
     return connected_infos
-
-
-def get_cpu_temp():
-    """
-    Get the CPU temperature
-    Returns it, along with a category.
-    """
-    temp = round(CPUTemperature().temperature, 1)
-
-    if temp <= 60:
-        return temp, "success"
-    if temp <= 75:
-        return temp, "warning"
-    return temp, "danger"
