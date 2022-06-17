@@ -4,7 +4,7 @@ from time import sleep
 import network
 import socket
 
-from configuration import COLORS, config, DEVICE
+from configuration import COLORS, config
 
 import helpers as h
 
@@ -12,11 +12,13 @@ h.reset_pins()
 
 print("Testing LEDs")
 
-pattern = DEVICE*[1023, 0]
+pattern = [1023, 0, 1023, 0, 1023, 0]
 
-for duty_cycle in pattern:
-    h.set_rgb(**{color: duty_cycle for color in COLORS})
-    sleep(0.2)
+for color, pwm in COLORS.items():
+    print(color)
+    for duty_cycle in pattern:
+        h.set_rgb(**{color: duty_cycle})
+        sleep(0.5)
 
 print("Testing WiFI")
 
