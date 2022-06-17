@@ -215,14 +215,15 @@ def send_program(n_clicks: int) -> str:
 
         payload_json = json.dumps(p)
         for device_id, device in devices.items():
+            topic = f"esps/{device_id}" if device["type"] == "ESP" else "dash/main"
             if device["selected"]:
                 target=""
                 if payload["program"] == "overwrite":
                     target = "/overwrite"
                 client.publish(
-                    f"esps/{device_id}{target}", payload=json.dumps(p), qos=1, retain=False
+                    f"{topic}{target}", payload=json.dumps(p), qos=1, retain=False
                 )
-                print(f"Sent to device n°{device_id}")
+                print(f"Sent to device n°{device_id} on topic {topic}")
         return "success"
 
 

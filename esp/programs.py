@@ -57,6 +57,7 @@ async def fade():
     ramp_up()
     ramp_down()
 
+    await asyncio.sleep(100)
 
 async def storm(**kwargs):
     """
