@@ -46,23 +46,23 @@ app = dash.Dash(
 )
 
 ##### NAVBAR #####
-temperature_badge = dbc.Badge(
-    "",
-    pill=True,
-    color="primary",
-    id="temperature_badge",
-    class_name="button",
-)
 
-
-@app.callback(
-    Output("temperature_badge", "children"),
-    Output("temperature_badge", "color"),
-    Input("temperature_badge", "n_clicks"),
-)
-def display_cpu_temp(n_clicks: int) -> str:
-    T, color = system_infos.get_cpu_temp()
-    return f"CPU : {T}°", color
+# Uncomment to recover Temperature... I think it's pretty useless and fails outside raspberry
+# temperature_badge = dbc.Badge(
+#     "",
+#     pill=True,
+#     color="primary",
+#     id="temperature_badge",
+#     class_name="button",
+# )
+# @app.callback(
+#     Output("temperature_badge", "children"),
+#     Output("temperature_badge", "color"),
+#     Input("temperature_badge", "n_clicks"),
+# )
+# def display_cpu_temp(n_clicks: int) -> str:
+#     T, color = system_infos.get_cpu_temp()
+#     return f"CPU : {T}°", color
 
 
 ddm = dbc.DropdownMenu(
@@ -143,10 +143,10 @@ def activate_devices(n_clicks_list: List[int]) -> List[str]:
 
 navbar = dbc.NavbarSimple(
     children=[
-        dbc.NavItem(
-            temperature_badge,
-            class_name="d-inline-flex align-items-center justify-content-start",
-        ),
+        # dbc.NavItem(
+        #     temperature_badge,
+        #     class_name="d-inline-flex align-items-center justify-content-start",
+        # ),
         ddm,
     ],
     brand="Phasm - Sceno",

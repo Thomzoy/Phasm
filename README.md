@@ -143,3 +143,13 @@ app.run_server(port=8000, host="10.3.141.1", debug=True)
 ## Next Steps
 
 - Try with `Node-RED` ?
+
+
+
+## Conda setup
+```bash
+conda create -n sceno
+conda activate sceno
+conda install pip
+pip install RPi.GPIO dash-bootstrap-components tinydb dash-daq paho-mqtt gpiozero
+```
