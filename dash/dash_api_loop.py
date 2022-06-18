@@ -26,14 +26,7 @@ def on_message(client, userdata, message):
         CURRENT_TASK.cancel()
     except:
         pass
-    #dash_programs.program(client, payload)
 
-def callback(topic, msg, retained):
-    global client, PAYLOAD
-    print((topic, msg, retained))
-    payload = json.loads(msg.decode("utf-8"))
-    print("Payload: ", payload)
-    PAYLOAD = payload
 
 async def main():
     global PAYLOAD, CHANGE_PROGRAM, CURRENT_TASK

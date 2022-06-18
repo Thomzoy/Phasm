@@ -203,7 +203,7 @@ def send_program(n_clicks: int) -> str:
     """
     global HOST, MQTT_PORT
     p = deepcopy(payload)
-
+    print("picked_payload: ",payload)
     if n_clicks > 0:
         for id, kwarg in p["program_kwargs"].items():
             if "color" in id:
@@ -224,6 +224,7 @@ def send_program(n_clicks: int) -> str:
                     f"{topic}{target}", payload=json.dumps(p), qos=1, retain=False
                 )
                 print(f"Sent to device n°{device_id} on topic {topic}")
+                print("payload: ", payload)
         return "success"
 
 

@@ -45,30 +45,49 @@ def all_programs(program, payload):
             className="mt-3",
         )
 
-    if program == "color_fade":
+    if program == "ping_pong":
+
         selected_program = dbc.Card(
             dbc.CardBody(
                 [
-                    html.P("Color Fade!", className="card-text"),
+                    html.P("Ping Pong!", className="card-text"),
                     html.Div(
                         [
                             dbc.Label("Select a color"),
                             dbc.Input(
                                 value=payload["program_kwargs"].get(
-                                    "flash_color", "#000000"
+                                    "color_fade", "#000000"
                                 ),
                                 type="color",
-                                id=dict(role="program_kwarg", id="flash_color"),
+                                id=dict(role="program_kwarg", id="color_fade"),
                                 style={"width": 75, "height": 50},
                             ),
-                            dcc.Slider(
-                                min=0,
-                                max=1024,
-                                step=1,
-                                value=0,
-                                id=dict(role="program_kwarg", id="fade_slider"),
-                                updatemode="drag",
-                                size=100,
+                            dbc.Label("Select a fade duration"),
+                            dcc.Input(
+                                type="number",
+                                value=payload["program_kwargs"].get("duration_fade",1),
+                                id=dict(role="program_kwarg", id="duration_fade"),
+                            ),
+                        ]
+                    ),
+                ]
+            ),
+            className="mt-3",
+        )
+
+    if program == "color_cycle":
+
+        selected_program = dbc.Card(
+            dbc.CardBody(
+                [
+                    html.P("Color Cycle", className="card-text"),
+                    html.Div(
+                        [
+                            dbc.Label("Select a duration"),
+                            dcc.Input(
+                                type="number",
+                                value=payload["program_kwargs"].get("duration_cycle",1),
+                                id=dict(role="program_kwarg", id="duration_cycle"),
                             ),
                         ]
                     ),

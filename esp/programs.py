@@ -4,10 +4,13 @@ import helpers as h
 from time import sleep
 
 
-async def color_cycle():
+async def color_cycle(**kwargs):
+    n_steps = 180
+    duration = kwargs.get("duration_cycle",15)
+    delay = duration/n_steps
     for hue in range(0, 360, 2):
         h.set_rgb(*h.hsv_to_rgb(hue / 360, 1, 1))
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(delay)
 
 
 async def color_flash(**kwargs):
@@ -53,9 +56,12 @@ def ramp_down(color_to=(0, 0, 1023), duration=1, n_steps=100):
         sleep(duration / n_steps)
 
 
-async def fade():
-    ramp_up()
-    ramp_down()
+async def fade(**kwargs):
+
+    color_fade = kwargs.get("color_fade", {"R":1023,"G":800,"B":0})
+    duration_fade = kwargs.get("duration_fade", 1)
+    ramp_up(color_from=color_fade, duration=duration_fade)
+    ramp_down(color_to=color_fade, duration=duration_fade)
 
     await asyncio.sleep(100)
 
@@ -82,7 +88,7 @@ async def storm(**kwargs):
 
 async def program(program_name, **kwargs):
     if program_name == "color_cycle":
-        await color_cycle()
+        await color_cycle(**kwargs)
     elif program_name == "color_flash":
         await color_flash(**kwargs)
     elif program_name == "storm":

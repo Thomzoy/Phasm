@@ -14,7 +14,7 @@ tab1_content = dbc.Card(
                     {"label": "Color Cycle", "value": "color_cycle"},
                     {"label": "Color Flash", "value": "color_flash"},
                     {"label": "Storm", "value": "storm"},
-                    {"label": "Color Fade", "value": "color_fade"},
+                    {"label": "Ping Pong", "value": "ping_pong"},
                     {"label": "Change Program", "value": "overwrite"}
                 ],
             ),
