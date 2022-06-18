@@ -6,8 +6,8 @@ from time import sleep
 
 async def color_cycle(**kwargs):
     n_steps = 180
-    duration = kwargs.get("duration_cycle",15)
-    delay = duration/n_steps
+    duration = kwargs.get("duration_cycle", 15)
+    delay = duration / n_steps
     for hue in range(0, 360, 2):
         h.set_rgb(*h.hsv_to_rgb(hue / 360, 1, 1))
         await asyncio.sleep(delay)
@@ -17,19 +17,21 @@ async def color_flash(**kwargs):
     pattern = [1023, 0, 1023, 0, 1023, 0]
 
     color = kwargs.get("flash_color", None)
+    duration_flash = kwargs.get("duration_flash", 1.)
+
 
     if color is None:
         for color in ["R", "G", "B"]:
             h.set_rgb(**{color: 1023})
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(float(duration_flash)/2)
             h.reset_pins()
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(float(duration_flash)/2)
 
     else:
         h.set_rgb(*color)
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(float(duration_flash)/2)
         h.reset_pins()
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(float(duration_flash)/2)
 
 
 def ramp_up(color_from=(0, 0, 1023), duration=1, n_steps=100):
@@ -57,13 +59,15 @@ def ramp_down(color_to=(0, 0, 1023), duration=1, n_steps=100):
 
 
 async def fade(**kwargs):
+    color_fade = kwargs.get("color_fade", {"R": 1023, "G": 800, "B": 0})
+    duration_fade_up = kwargs.get("duration_fade", 1)
+    duration_fade_down = kwargs.get("duration_fade_bottom", duration_fade_up)
 
-    color_fade = kwargs.get("color_fade", {"R":1023,"G":800,"B":0})
-    duration_fade = kwargs.get("duration_fade", 1)
-    ramp_up(color_from=color_fade, duration=duration_fade)
-    ramp_down(color_to=color_fade, duration=duration_fade)
+    ramp_up(color_from=color_fade, duration=duration_fade_up)
+    ramp_down(color_to=color_fade, duration=duration_fade_down)
 
     await asyncio.sleep(100)
+
 
 async def storm(**kwargs):
     """
